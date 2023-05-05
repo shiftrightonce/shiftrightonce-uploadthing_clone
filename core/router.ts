@@ -1,3 +1,4 @@
+import { IUploadManager } from "./upload.ts";
 import { HTTPRequest } from "./request.ts";
 
 export { HTTPRequest } from "./request.ts";
@@ -15,14 +16,23 @@ export class Router {
   private routes: Map<HTTP_VERB, Map<string, RouteCallback>>;
   private middleware: Array<Middleware> = [];
   private four0fourHandler: ((req: Request) => Response | Promise<Response>) | undefined;
+  private uploadManager: IUploadManager | undefined;
 
-  constructor() {
+  constructor(uploadManager?: IUploadManager) {
     this.routes = new Map();
     this.routes.set(HTTP_VERB.GET, new Map());
     this.routes.set(HTTP_VERB.POST, new Map());
     this.routes.set(HTTP_VERB.PUT, new Map());
     this.routes.set(HTTP_VERB.DELETE, new Map());
+
+    this.uploadManager = uploadManager;
   }
+
+
+  public setUploadManager (uploadManager: IUploadManager) {
+    this.uploadManager = uploadManager;
+  }
+
 
   public registerMiddleware (middleware: Middleware): this {
     this.middleware.push(middleware);
@@ -70,7 +80,7 @@ export class Router {
           }
         }
 
-        return await rootMiddleware(new HTTPRequest(request, match));
+        return await rootMiddleware(new HTTPRequest(request, match, this.uploadManager));
       }
       aRoute = keys?.next();
     }

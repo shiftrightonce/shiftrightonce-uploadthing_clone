@@ -1,6 +1,7 @@
 import { MultipartReader } from "https://deno.land/std@0.119.0/mime/mod.ts";
 import { FormFile, MultipartFormData } from "https://deno.land/std@0.119.0/mime/multipart.ts";
 import { readerFromStreamReader, copy } from "https://deno.land/std@0.186.0/streams/mod.ts";
+import { IUploadManager } from "./upload.ts";
 
 export class HTTPRequest {
   private _req: Request;
@@ -8,11 +9,12 @@ export class HTTPRequest {
   private _form: MultipartFormData | null = null;
   private _query: URLSearchParams;
   private _data: Map<string, unknown> = new Map()
+  private _uploadManager: IUploadManager | undefined;
 
   private isMultipartForm = false;
   private isForm = true;
 
-  constructor(req: Request, match: URLPatternResult) {
+  constructor(req: Request, match: URLPatternResult, upload_manager?: IUploadManager) {
     this._req = req;
     this._params = match.pathname.groups;
 
@@ -20,6 +22,7 @@ export class HTTPRequest {
     this.isMultipartForm = contentType.indexOf('multipart/form-data') > -1;
 
     this._query = new URLSearchParams(this._req.url.split("?").pop() || '');
+    this._uploadManager = upload_manager;
   }
 
   public async form (): Promise<MultipartFormData | null> {
@@ -41,6 +44,10 @@ export class HTTPRequest {
 
   get body () {
     return this._req.body;
+  }
+
+  get uploadManager () {
+    return this._uploadManager;
   }
 
   public getData<T> (key: string): T | undefined {

@@ -1,10 +1,9 @@
 import { ServerController } from "./controllers/server_controller.ts";
 import { UploadController } from "./controllers/upload_controller.ts";
-import { makeHttpResponse } from "./core/response.ts";
 import { HTTPRequest, Router } from "./core/router.ts";
-import { getAccessToken, getTokenFromHeader, getTokenFromQueryString } from "./services/auth_service.ts";
+import { getAccessToken } from "./services/auth_service.ts";
 
-export const router = new Router();
+const router = new Router();
 
 // router.registerMiddleware((req, next) => {
 //   console.log('middleware 1', req._params);
@@ -43,7 +42,7 @@ const uploadController = new UploadController("uploads");
 const serverController = new ServerController('uploads');
 
 // uploading
-router.post("/upload", uploadController, 'handleUploadedFile');
+router.post("/v1/f", uploadController, 'handleUploadedFile');
 
 // serving
 router.get('/s/:id', serverController, 'serveFile');
