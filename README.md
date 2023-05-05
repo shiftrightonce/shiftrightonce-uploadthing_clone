@@ -24,13 +24,13 @@ can run it in `dev` mode
 From the root of the project directory, run: `deno task dev`.
 
 Default port: `8080`
-Upload endpoint: `http://localhost:8080/upload`
+Upload endpoint: `http://localhost:8080/v1/f`
 Payload must be a `multipart form` and must have two fields
 
 - `metadata`: A stringified JSON
-- `field2`: The file to upload
+- `files`: The file to upload
 
-Note: You can upload multiple files under `field2`
+Note: You can upload multiple files under `files`
 
 ## Contribution
 
