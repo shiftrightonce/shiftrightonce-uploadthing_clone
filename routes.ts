@@ -1,6 +1,6 @@
 import { ServerController } from "./controllers/server_controller.ts";
 import { UploadController } from "./controllers/upload_controller.ts";
-import { HTTPRequest, Router } from "./core/router.ts";
+import { HTTPRequest, Router, } from "./core/router.ts";
 import { getAccessToken } from "./services/auth_service.ts";
 
 const router = new Router();
@@ -14,7 +14,6 @@ const router = new Router();
 //   console.log('middleware 2');
 //   return next(req)
 // })
-
 
 
 router.registerMiddleware((req, next) => {
@@ -38,8 +37,8 @@ router.get("/", (_req: HTTPRequest) => {
 // registration
 
 
-const uploadController = new UploadController("uploads");
-const serverController = new ServerController('uploads');
+const uploadController = new UploadController();
+const serverController = new ServerController();
 
 // uploading
 router.post("/v1/f", uploadController, 'handleUploadedFile');

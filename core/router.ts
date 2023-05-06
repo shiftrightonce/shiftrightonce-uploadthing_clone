@@ -2,16 +2,16 @@ import { IUploadManager } from "./upload.ts";
 import { HTTPRequest } from "./request.ts";
 
 export { HTTPRequest } from "./request.ts";
-
 export type Middleware = (req: HTTPRequest, next: (req: HTTPRequest) => Response | Promise<Response>) => Response | Promise<Response>;
-
 export type RouteCallback = ((req: HTTPRequest) => Response | Promise<Response>) | Middleware;
+
 enum HTTP_VERB {
   GET,
   POST,
   PUT,
   DELETE
 }
+
 export class Router {
   private routes: Map<HTTP_VERB, Map<string, RouteCallback>>;
   private middleware: Array<Middleware> = [];

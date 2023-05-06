@@ -5,11 +5,6 @@ import { HTTPRequest } from "../core/router.ts";
 import { UploadResult } from "../core/upload.ts";
 
 export class UploadController {
-  private rootDir: string;
-
-  constructor(rootDir: string) {
-    this.rootDir = rootDir
-  }
 
   public async handleUploadedFile (req: HTTPRequest): Promise<Response> {
     const files = await req.files('files') || []
