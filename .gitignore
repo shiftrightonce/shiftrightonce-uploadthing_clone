@@ -2,4 +2,6 @@ uploads/*
 !upload/.gitkeep
 backend/uploads/*
 !backend/upload/.gitkeep
+backend/storage/*
+!backend/storage/.gitkeep
 .env
