@@ -1,5 +1,38 @@
-import { InMemoryUploadManager } from "./core/memory_file_upload.ts";
 import { IUploadManager } from "./core/upload.ts"
+import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { createStatements, findOneSystemAdmin } from "./setup/sql.ts";
+import {
+  Generator,
+} from "https://deno.land/x/ulideno@v0.2.0/mod.ts";
+import { IUser, UserRepository } from "./repository/user_repository.ts";
+
+const db = new Database("./storage/data.db");
+
+export const userRepo = new UserRepository();
+
+export function makeUlid (): string {
+  const gen = new Generator();
+  return (gen.ulid_encoded() as string).toLowerCase();
+}
+
+
+// create db tables
+for (const sqlStatement of createStatements) {
+  db.exec(sqlStatement)
+}
+
+// check if we have a system_admin
+const result = db.prepare(findOneSystemAdmin).get({ system_admin: 1 });
+console.log(result)
+
+if (!result) {
+  await userRepo.createDefaultSystemAdmin()
+}
+
+export function getDb () {
+  return db;
+}
+
 
 /**
  * Returns the port set in the environment variable: `UPLOAD_SOMETHING_PORT`
