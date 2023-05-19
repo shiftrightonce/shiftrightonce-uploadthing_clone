@@ -1,29 +1,12 @@
+import { registerAdminTenantRoutes } from "./controllers/admin/admin_tenant_controller.ts";
+import { registerAdminUserRoutes } from "./controllers/admin/admin_user_controller.ts";
 import { ServerController } from "./controllers/server_controller.ts";
+import { registerTenantController } from "./controllers/tenant/tenant_controller.ts";
 import { UploadController } from "./controllers/upload_controller.ts";
-import { HTTPRequest, Router, } from "./core/router.ts";
-import { getAccessToken } from "./services/auth_service.ts";
+import { HTTPRequest, RouteManager } from "./core/router.ts";
+import { getAccessToken, isAdmin, makePermissionDeniedResponse } from "./services/auth_service.ts";
 
-const router = new Router();
-
-// router.registerMiddleware((req, next) => {
-//   console.log('middleware 1', req._params);
-//   return next(req)
-// })
-
-// router.registerMiddleware((req, next) => {
-//   console.log('middleware 2');
-//   return next(req)
-// })
-
-
-router.registerMiddleware((req, next) => {
-  const token = getAccessToken(req);
-  req.addData('token', token);
-
-  // TODO: Authenticate ???
-
-  return next(req)
-})
+const router = new RouteManager();
 
 
 // general
@@ -34,14 +17,41 @@ router.get("/", (_req: HTTPRequest) => {
   return response;
 })
 
+router.get('/test', () => {
+  return new Response('Everything is still working');
+})
+
 // registration
 
 
 const uploadController = new UploadController();
 const serverController = new ServerController();
 
+// // admin routes
+router.group('/v1/admin', (r) => {
+  registerAdminTenantRoutes(r);
+  registerAdminUserRoutes(r);
+}).registerMiddleware((req, next) => {
+  const token = getAccessToken(req);
+  req.addData('token', token);
+
+  return (isAdmin(token)) ? next(req) : makePermissionDeniedResponse();
+});
+
+// tenant routes
+router.group('/v1/t', (r) => {
+  registerTenantController(r)
+}).registerMiddleware((req, next) => {
+  const token = getAccessToken(req);
+  req.addData('token', token);
+  req.addData('tenant', { id: 123, name: 'foo' }); // TODO: Change to real data
+
+  return next(req)
+})
+
+
 // uploading
-router.post("/v1/f", uploadController, 'handleUploadedFile');
+router.post("/v1/f", uploadController, 'handleUploadedFile'); // TODO: Add auth middleware
 
 // serving
 router.get('/s/:id', serverController, 'serveFile');
