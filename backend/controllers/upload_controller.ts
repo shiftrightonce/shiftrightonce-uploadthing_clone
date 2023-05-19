@@ -11,7 +11,7 @@ export class UploadController {
     const results: Array<UploadResult> = [];
 
     for (const aFile of files) {
-      const name = await this.generateName(aFile);
+      const name = this.generateName(aFile);
 
       try {
         if (req.uploadManager) {
@@ -53,20 +53,11 @@ export class UploadController {
     }
   }
 
-  private async generateName (file: FormFile, prefix = ''): Promise<string> {
-    prefix = prefix || Date.now().toString()
-
+  private generateName (file: FormFile): string {
     let ext = file.filename.split('.').pop();
     ext = ext ? `.${ext}` : '';
 
-    const buffer = await crypto.subtle.digest(
-      "SHA-384",
-      new TextEncoder().encode(`${prefix}-${file.filename}`),
-    );
-
-    return [...new Uint8Array(buffer)]
-      .map(x => x.toString(16).padStart(2, '0'))
-      .join('') + ext;
+    return `${crypto.randomUUID()}${ext}`;
 
   }
 }
