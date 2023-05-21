@@ -1,6 +1,6 @@
 import { makeHttpResponse } from "../core/response.ts";
 import { HTTPRequest } from "../core/router.ts";
-import { ITenant, TenantId } from "../repository/tenant_repository.ts";
+import { ITenant, TenantId } from "../entities/tenant_entity.ts";
 import { IUser } from "../repository/user_repository.ts";
 import { ApiError, makeApiHttpResponse, makeApiResponse } from "./api_service.ts";
 

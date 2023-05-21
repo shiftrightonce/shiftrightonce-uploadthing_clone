@@ -1,9 +1,9 @@
-import { generateUserToken } from "../services/auth_service.ts";
-import { ITenant, TenantId } from "./tenant_repository.ts";
 import { APIResponse, ApiError, makeApiFailResponse, makeApiSuccessResponse } from "../services/api_service.ts";
-import { resolve } from "https://deno.land/std@0.119.0/path/win32.ts";
-import { getDb, makeUlid } from "../app.ts";
+import { getDb } from "../app.ts";
 import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { User } from "../entities/user_entity.ts";
+import { findOneSystemAdmin } from "../setup/sql.ts";
+import { ITenant, TenantId } from "../entities/tenant_entity.ts";
 
 export type UserId = string | number;
 
@@ -19,113 +19,7 @@ export interface IUser {
   isSysAdmin: boolean
 }
 
-class User implements IUser {
-  private _id: UserId;
-  private _status: UserStatus = UserStatus.ACTIVE;
-  private _isSystemAdmin = false;
-  private _name = ''
-
-  constructor(id: UserId = makeUlid()) {
-    this._id = id;
-  }
-
-  get id () {
-    return this._id
-  }
-
-  get name () {
-    return this._name
-  }
-
-  set name (name) {
-    this._name = name;
-  }
-
-  get status () {
-    return this._status
-  }
-
-  set status (s: UserStatus) {
-    this._status = s
-  }
-
-  get statusAsNumber () {
-    switch (this.status) {
-      case UserStatus.INACTIVE:
-        return 0
-      case UserStatus.ACTIVE:
-        return 1
-    }
-    return 0
-  }
-
-  get isSysAdmin () {
-    return this._isSystemAdmin
-  }
-
-  set isSysAdmin (isSysAdmin: boolean) {
-    this._isSystemAdmin = isSysAdmin;
-  }
-
-  get isSystemAdminAsNumber () {
-    return this.isSysAdmin ? 1 : true
-  }
-
-  public static fromRecord (record: Record<string, unknown>): User {
-    let obj: User;
-
-    // ID
-    if (record.id) {
-      obj = new User(record.id as UserId)
-    } else {
-      obj = new User()
-    }
-
-    // Name
-    if (record.name) {
-      obj.name = record.name as string
-    }
-
-    // status
-    if (record.status) {
-      obj.status = record.status as UserStatus
-    }
-
-    // is system admin
-    if (record.system_admin) {
-      obj.isSysAdmin = record.system_admin as boolean
-    }
-
-    if (record.isSystemAdmin) {
-      obj.isSysAdmin = record.isSystemAdmin as boolean
-    }
-
-    if (record.is_system_admin) {
-      obj.isSysAdmin = record.is_system_admin as boolean
-    }
-
-    return obj
-
-  }
-
-  public toJSON () {
-    return {
-      id: this.id,
-      is_system_admin: this.isSysAdmin,
-      name: this.name,
-      status: this.status
-    }
-  }
-}
-
-
-const dummyData: IUser[] = [
-  new User()
-  ,
-  new User()
-  ,
-  new User()
-];
+const dummyData: IUser[] = []
 
 export type UserCommitResult = APIResponse<IUser>
 
@@ -146,6 +40,17 @@ export class UserRepository {
     const result = this.sqliteDb.prepare(sql).get({ id })
 
     return (result) ? makeApiSuccessResponse(User.fromRecord(result)) : makeApiFailResponse(new ApiError('User does not exist'))
+  }
+
+  public async fetchDefaultUser (): Promise<UserCommitResult> {
+    return new Promise((resolve, reject) => {
+      try {
+        const result = this.sqliteDb.prepare(findOneSystemAdmin).get({ system_admin: 1 });
+        resolve((result) ? makeApiSuccessResponse(User.fromRecord(result)) : makeApiFailResponse(new ApiError('Default user not found')));
+      } catch (error) {
+        reject(error)
+      }
+    });
   }
 
   public async findUsersByTenant (_tenant: TenantId | ITenant, _limit = 250): Promise<APIResponse<IUser[]>> {

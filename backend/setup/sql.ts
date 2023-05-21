@@ -1,7 +1,9 @@
 export const tenantTable = `
 CREATE TABLE IF NOT EXISTS "tenants" (
 	"internal_id"	INTEGER,
+	"id"	TEXT NOT NULL UNIQUE,
 	"status"	INTEGER NOT NULL,
+	"is_default"	INTEGER NOT NULL,
 	"name"	INTEGER NOT NULL,
 	PRIMARY KEY("internal_id" AUTOINCREMENT)
 )`;
@@ -54,8 +56,8 @@ VALUES ('01h0s5zzzqkahbv3myfttmcrhv', 'Default Admin', 1, 1)
 `;
 
 export const createStatements = [
-  tenantTable,
-  userTable,
-  userTenantRelationshipTable,
-  userTenantTableIndex
+	tenantTable,
+	userTable,
+	userTenantRelationshipTable,
+	userTenantTableIndex
 ];
