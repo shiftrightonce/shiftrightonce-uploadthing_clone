@@ -88,10 +88,6 @@ export class UserTenantRepository {
       result.data.roles = role;
       return await this.saveUserTenant(result.data);
     } else {
-      console.log({
-        user_internal_id: user.internal_id,
-        tenant_internal_di: tenant.internal_id
-      })
       const record = new UserTenant();
       record.setTenant(tenant);
       record.setUser(user);
