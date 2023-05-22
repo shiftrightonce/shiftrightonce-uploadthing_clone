@@ -34,7 +34,7 @@ export class UserTenantRepository {
   }
 
   public findUserByToken (token: string, withDeleted = false): Promise<APIResponse<UserTenant>> {
-    const sql = this.generateSql((withDeleted) ? ` WHERE token = :token` : ' WHERE token = :token AND deleted_at = 0');
+    const sql = this.generateSql((withDeleted) ? ` WHERE token = :token` : ' WHERE token = :token AND user_tenants.deleted_at = 0');
     return new Promise((resolve, reject) => {
       try {
         const result = this.sqliteDb.prepare(sql).get({ token });
@@ -53,7 +53,7 @@ export class UserTenantRepository {
     page: UserTenant[]
   }>> {
     const dbCursor = (typeof cursor === 'string') ? DbCursor.fromString(cursor) : cursor;
-    const sql = this.generateSql((withDeleted) ? ` WHERE tenant_internal_id = :tenant_id AND ${dbCursor.toSql()} ` : ` WHERE tenant_internal_id = :tenant_id AND deleted_at = 0 AND ${dbCursor.whereSql()} ${dbCursor.orderBySql()} ${dbCursor.limitSql()} `);
+    const sql = this.generateSql((withDeleted) ? ` WHERE tenant_internal_id = :tenant_id AND ${dbCursor.toSql()} ` : ` WHERE tenant_internal_id = :tenant_id AND user_tenants.deleted_at = 0 AND ${dbCursor.whereSql()} ${dbCursor.orderBySql()} ${dbCursor.limitSql()} `);
 
     return new Promise((resolve, reject) => {
       let last = '';
@@ -167,6 +167,8 @@ export class UserTenantRepository {
             token: userTenant.token,
             roles: JSON.stringify(userTenant.roles),
             created_at: Date.now(),
+            updated_at: 0,
+            deleted_at: 0
           })
         }
 
