@@ -37,8 +37,8 @@ export class AdminUserController {
   }
 
   public async update (request: HTTPRequest) {
-    const data = User.fromRecord(await request.req.json());
     const id = request.param<UserId>('id') || false;
+    const data = User.fromRecord({ ...await request.req.json(), id });
 
     if (id) {
       return makeJSONResponse(await this.userRepo.updateUser(id, data));
