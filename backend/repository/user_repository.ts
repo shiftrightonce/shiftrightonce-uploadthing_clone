@@ -187,11 +187,13 @@ export class UserRepository {
       let affected = 0;
       try {
         if (user.internal_id) {
-          affected = this.sqliteDb.exec(update_sql, {
+          affected = 1;
+          this.sqliteDb.exec(update_sql, {
             name: user.name,
             status: user.statusAsNumber,
             system_admin: user.isSystemAdminAsNumber,
-            updated_at: Date.now()
+            updated_at: Date.now(),
+            internal_id: user.internal_id,
           })
         } else {
           affected = this.sqliteDb.exec(create_sql, {
