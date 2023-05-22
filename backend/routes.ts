@@ -28,12 +28,6 @@ router.get("/", (_req: HTTPRequest) => {
   return response;
 })
 
-router.get('/test', () => {
-  return new Response('Everything is still working');
-})
-
-// registration
-
 
 const uploadController = new UploadController();
 const serverController = new ServerController();
