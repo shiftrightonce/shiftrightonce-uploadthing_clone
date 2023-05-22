@@ -1,24 +1,10 @@
 import { APIResponse, ApiError, makeApiFailResponse, makeApiSuccessResponse } from "../services/api_service.ts";
 import { getDb } from "../app.ts";
 import { ITenant, Tenant, TenantId, TenantStatus } from "../entities/tenant_entity.ts";
-import { Database, RestBindParameters } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
+import { DbCursor } from "./repository_helper.ts";
 
-export type TenantCommitResult = Promise<APIResponse<ITenant>>
-
-const dummyData: Array<ITenant> = [
-  {
-    id: 123,
-    status: TenantStatus.ACTIVE,
-    name: 'default tenant',
-    is_default: false
-  },
-  {
-    id: 54353,
-    status: TenantStatus.ACTIVE,
-    name: 'default tenant2',
-    is_default: false
-  },
-];
+export type TenantCommitResult = Promise<APIResponse<Tenant>>
 
 export class TenantRepository {
 
@@ -28,10 +14,13 @@ export class TenantRepository {
     this.sqliteDb = getDb()
   }
 
-  public async findTenantById (id: TenantId): TenantCommitResult {
-    const sql = `SELECT * FROM 'tenants' WHERE id = :id`;
-    // const result = await this.doSelect<Record<string, unknown>>(sql, { id: id })
-    // return (result) ? makeApiSuccessResponse(Tenant.fromRecord(result)) : makeApiFailResponse(new ApiError('Tenant does not exist'));
+  public findTenantById (id: TenantId, withDeleted = false): TenantCommitResult {
+    let sql: string;
+    if (withDeleted) {
+      sql = `SELECT * FROM 'tenants' WHERE id = :id`;
+    } else {
+      sql = `SELECT * FROM 'tenants' WHERE id = :id AND deleted_at = 0`;
+    }
 
     return new Promise((resolve, reject) => {
       try {
@@ -43,10 +32,15 @@ export class TenantRepository {
     });
   }
 
-  public async findTenantByInternalId (internalId: number): TenantCommitResult {
-    const sql = `SELECT * FROM 'tenants' WHERE internal_id = :id`;
-    // const result = await this.doSelect<Record<string, unknown>>(sql, { id: internalId })
-    // return (result) ? makeApiSuccessResponse(Tenant.fromRecord(result)) : makeApiFailResponse(new ApiError('Tenant does not exist'));
+  public findTenantByInternalId (internalId: number, withDeleted = false): TenantCommitResult {
+    let sql: string;
+
+    if (withDeleted) {
+      sql = `SELECT * FROM 'tenants' WHERE internal_id = :id`;
+    } else {
+      sql = `SELECT * FROM 'tenants' WHERE internal_id = :id AND deleted_at = 0`;
+    }
+
     return new Promise((resolve, reject) => {
       try {
         const result = this.sqliteDb.prepare(sql).get({ id: internalId })
@@ -57,33 +51,50 @@ export class TenantRepository {
     });
   }
 
-  public async fetchDefaultTenant (): TenantCommitResult {
-    const sql = `SELECT * FROM 'tenants' WHERE is_default = 1`;
-    // const result = await this.doSelect<Record<string, unknown>>(sql, {})
-    // return (result) ? makeApiSuccessResponse(Tenant.fromRecord(result)) : makeApiFailResponse(new ApiError('Tenant does not exist'));
+  public fetchDefaultTenant (): TenantCommitResult {
+    const sql = `SELECT * FROM 'tenants' WHERE is_default = 1 AND deleted_at = 0`;
+
     return new Promise((resolve, reject) => {
       try {
         const result = this.sqliteDb.prepare(sql).get()
-        resolve((result) ? makeApiSuccessResponse(Tenant.fromRecord(result)) : makeApiFailResponse(new ApiError('Tenant does not exist')));
+        resolve((result) ? makeApiSuccessResponse(Tenant.fromRecord(result)) : makeApiFailResponse(new ApiError('Default tenant does not exist')));
       } catch (error) {
         reject(error)
       }
     });
   }
 
-  public async getTenants (_limit = 250): Promise<APIResponse<ITenant[]>> {
+  public getTenants (withDeleted = false, cursor: string | DbCursor = ''): Promise<APIResponse<{
+    cursors: {
+      current: string,
+      next: string | null
+    },
+    page: ITenant[]
+  }>> {
+    const dbCursor = (typeof cursor === 'string') ? DbCursor.fromString(cursor) : cursor;
+    const sql = (withDeleted) ? `SELECT * FROM 'tenants' WHERE ${dbCursor.toSql()}` : `SELECT * FROM 'tenants' WHERE deleted_at = 0 AND ${dbCursor.whereSql()} ${dbCursor.orderBySql()} ${dbCursor.limitSql()} `;
+    let last = '';
+
+    const page = this.sqliteDb.prepare(sql).all().map((r) => {
+      last = r[dbCursor.field] || '';
+      return Tenant.fromRecord(r)
+    });
+
+    const next = dbCursor.next(page.length, last)?.toEncodedString();
+
     return new Promise((resolve, _reject) => {
-      resolve(makeApiSuccessResponse([...dummyData]))
+      resolve(makeApiSuccessResponse({
+        cursors: {
+          current: dbCursor.toEncodedString(),
+          next: next || null
+        },
+        page
+      }))
     })
   }
 
-  public async createTenant (tenant: ITenant): TenantCommitResult {
-    return new Promise((resolve, _reject) => {
-      tenant.id = crypto.randomUUID();
-      dummyData.push(tenant)
-
-      resolve(makeApiSuccessResponse(tenant));
-    })
+  public async createTenant (tenant: Tenant): TenantCommitResult {
+    return await this.saveTenant(tenant)
   }
 
 
@@ -96,43 +107,64 @@ export class TenantRepository {
     return await this.saveTenant(tenant);
   }
 
-  public async updateTenant (tenantId: TenantId, tenant: ITenant): TenantCommitResult {
-    const { tenant: existingTenant, index } = await this.pluckTenant(tenantId);
+  public async updateTenant (tenantId: TenantId, tenant: Tenant): TenantCommitResult {
+    const result = await this.findTenantById(tenantId);
 
-    return new Promise((resolve, _reject) => {
-      if (existingTenant) {
-        if (tenant.id) {
-          tenant.id = existingTenant.id;
-        }
+    if (result.success) {
+      result.data.merge(tenant);
+      return await this.saveTenant(result.data);
+    }
 
-        Object.assign(existingTenant, tenant);
-        dummyData[index] = existingTenant;
+    return result;
 
-        return resolve(makeApiSuccessResponse(existingTenant));
-      }
-      resolve(makeApiFailResponse(new ApiError(`Tenant '${tenantId}' does not exist`)))
-    })
   }
 
+  public async softDeleteTenant (tenantId: TenantId | Tenant): TenantCommitResult {
+    const id = (typeof tenantId === 'object') ? tenantId.id : tenantId;
+    const sql = `UPDATE 'tenants' SET updated_at = :updated_at, deleted_at = 0 WHERE id= :id`;
+    const result = await this.findTenantById(id);
 
-  public async deleteTenant (tenantId: TenantId): TenantCommitResult {
-    const { tenant: existingTenant, index } = await this.pluckTenant(tenantId);
+    if (result.success) {
+      const ts = Date.now();
+      this.sqliteDb.exec(sql, { id: result.data.id, updated_at: ts, deleted_at: ts });
+    }
 
-    return new Promise((resolve, _reject) => {
-      if (existingTenant) {
-        dummyData.splice(index, 1)
-        return resolve(makeApiSuccessResponse(existingTenant));
-      }
-      resolve(makeApiFailResponse(new ApiError(`Tenant '${tenantId}' does not exist`)))
-    })
+    return await this.findTenantById(id, true);
   }
 
-  public async saveTenant (tenant: Tenant): Promise<TenantCommitResult> {
+  public async harDeleteTenant (tenantId: TenantId | Tenant): TenantCommitResult {
+    const id = (typeof tenantId === 'object') ? tenantId.id : tenantId;
+    const sql = `DELETE * FROM 'users' WHERE id = :id `;
+
+    const result = await this.findTenantById(id);
+
+    if (result.success) {
+      this.sqliteDb.exec(sql, { id: result.data.id })
+    }
+
+    return result;
+
+  }
+
+  public async restoreTenant (tenant: TenantId | Tenant): TenantCommitResult {
+    const sql = `UPDATE 'users' SET updated_at = :updated_at, deleted_at = 0 WHERE id= :id`;
+    const id = (typeof tenant === 'object') ? tenant.id : tenant;
+    const result = await this.findTenantById(id, true);
+
+    if (result.success) {
+      this.sqliteDb.exec(sql, { updated_at: Date.now() })
+    }
+
+    return await this.findTenantById(id);
+
+  }
+
+  public saveTenant (tenant: Tenant): TenantCommitResult {
     const create_sql = `
-    INSERT INTO 'tenants' ('id', 'name', 'status', 'is_default') VALUES (:id, :name, :status, :is_default)
+    INSERT INTO 'tenants' ('id', 'name', 'status', 'is_default', 'created_at') VALUES (:id, :name, :status, :is_default, :created_at)
     `;
     const update_sql = `
-    UPDATE 'tenants' SET 'name' = :name, 'status' = :status, 'is_default' = :is_default WHERE internal_id = :internal_id
+    UPDATE 'tenants' SET 'name' = :name, 'status' = :status, 'is_default' = :is_default, 'updated_at' = :updated_at WHERE internal_id = :internal_id
     `;
 
     return new Promise((resolve, reject) => {
@@ -145,21 +177,16 @@ export class TenantRepository {
           affected = this.sqliteDb.exec(update_sql, {
             name: tenant.name,
             status: tenant.status,
-            is_default: tenant.is_default_as_number
+            is_default: tenant.is_default_as_number,
+            updated_at: Date.now()
           })
         } else {
-          console.log('data to insert', {
-            id: tenant.id,
-            name: tenant.name,
-            status: tenant.status,
-            is_default: tenant.is_default_as_number
-          });
-
           affected = this.sqliteDb.exec(create_sql, {
             id: tenant.id,
             name: tenant.name,
             status: tenant.status,
-            is_default: tenant.is_default_as_number
+            is_default: tenant.is_default_as_number,
+            created_at: Date.now(),
           })
         }
 
@@ -171,31 +198,4 @@ export class TenantRepository {
 
   }
 
-  // private async doSelect<T> (sql: string, params: Record<string, unknown>): Promise<T> {
-  //   return new Promise((resolve, reject) => {
-  //     try {
-  //       const result = this.sqliteDb.prepare(sql).get(params)
-  //       resolve(result as T);
-  //     } catch (error) {
-  //       reject(error)
-  //     }
-  //   });
-  // }
-
-  private pluckTenant (tenantId: TenantId): Promise<{ tenant?: ITenant, index: number }> {
-    const result: { tenant?: ITenant, index: number } = {
-      index: -1
-    };
-    return new Promise((resolve, _reject) => {
-      const _ = dummyData.filter((u, index) => {
-        if (u.id == tenantId) {
-          result.index = index
-          result.tenant = { ...u }
-          return true
-        }
-        return false
-      });
-      resolve(result)
-    });
-  }
 }
