@@ -14,8 +14,8 @@ export class ApiError extends Error {
   }
 }
 
-export function makeApiHttpResponse<T> (success: boolean, data?: T, error?: ApiError): Response {
-  return new Response(JSON.stringify(makeApiResponse(success, data, error)))
+export function makeApiHttpResponse<T> (success: boolean, data?: T, error?: ApiError, init?: ResponseInit): Response {
+  return new Response(JSON.stringify(makeApiResponse(success, data, error)), init)
 }
 
 export function makeApiResponse<T> (success: boolean, data?: T, error?: ApiError): APIResponse<T> {
