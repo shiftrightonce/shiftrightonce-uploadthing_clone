@@ -33,7 +33,7 @@ export class UserRepository {
     let sql: string;
 
     if (withDeleted) {
-      sql = `SELECT * FROM 'users' WHERE id = :id LIMIT 1 `;
+      sql = `SELECT * FROM 'users' WHERE id = :id`;
     } else {
       sql = `SELECT * FROM 'users' WHERE id = :id AND deleted_at = 0`;
     }
