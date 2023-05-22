@@ -1,32 +1,39 @@
+import { tenantRepo, userRepo, userTenantRepo } from "../../app.ts";
 import { makeJSONResponse } from "../../core/response.ts";
 import { HTTPRequest, IRouter } from "../../core/router.ts";
-import { ITenant, TenantRepository } from "../../repository/tenant_repository.ts";
+import { Tenant } from "../../entities/tenant_entity.ts";
+import { DbCursor } from "../../repository/repository_helper.ts";
+import { TenantRepository } from "../../repository/tenant_repository.ts";
 import { UserRepository } from "../../repository/user_repository.ts";
-import { makeApiResponse } from "../../services/api_service.ts";
+import { UserTenantRepository } from "../../repository/user_tenant_repository.ts";
 
 export class TenantController {
   private tenantRepo: TenantRepository;
   private userRepo: UserRepository;
+  private userTenantRepo: UserTenantRepository;
 
-  constructor(tenantRepo = new TenantRepository(), userRepo = new UserRepository()) {
+  constructor(tenantRepo = new TenantRepository(), userRepo = new UserRepository(), userTenantRepo = new UserTenantRepository()) {
     this.tenantRepo = tenantRepo;
     this.userRepo = userRepo;
+    this.userTenantRepo = userTenantRepo;
   }
 
   public async getUsers (req: HTTPRequest) {
-    // TODO: check user permission...
-    return makeJSONResponse(await this.userRepo.findUsersByTenant(this.pluckTenant(req)))
+    const cursor = DbCursor.fromHttpRequest(req) || '';
+    const withDeleted = (req.query.get('delete')) ? true : false;
+
+    return makeJSONResponse(await this.userTenantRepo.findUsersByTenant(this.pluckTenant(req), withDeleted, cursor))
   }
 
 
-  private pluckTenant (req: HTTPRequest): ITenant {
-    return req.getData('tenant') as ITenant
+  private pluckTenant (req: HTTPRequest): Tenant {
+    return req.getData('tenant') as Tenant
   }
 }
 
 
 export function registerTenantController (r: IRouter): IRouter {
-  const controller = new TenantController()
+  const controller = new TenantController(tenantRepo, userRepo, userTenantRepo)
 
   r.get('/users', controller, 'getUsers')
 

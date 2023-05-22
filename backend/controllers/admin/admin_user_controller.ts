@@ -2,7 +2,10 @@ import { userRepo } from "../../app.ts";
 import { HTTPRequest } from "../../core/request.ts";
 import { makeJSONResponse } from "../../core/response.ts";
 import { IRouter } from "../../core/router.ts";
-import { IUser, UserId, UserRepository } from "../../repository/user_repository.ts";
+import { Tenant } from "../../entities/tenant_entity.ts";
+import { User } from "../../entities/user_entity.ts";
+import { DbCursor } from "../../repository/repository_helper.ts";
+import { UserId, UserRepository } from "../../repository/user_repository.ts";
 import { ApiError, makeApiFailResponse } from "../../services/api_service.ts";
 
 export class AdminUserController {
@@ -12,37 +15,57 @@ export class AdminUserController {
     this.userRepo = repo
   }
 
-  public async getUsers (_request: HTTPRequest) {
-    const response = makeJSONResponse(await this.userRepo.getUsers());
-    return response
+  public async getUsers (request: HTTPRequest) {
+    const cursor = DbCursor.fromHttpRequest(request) || '';
+    const withDeleted = (request.query.get('delete')) ? true : false;
+
+    return makeJSONResponse(await this.userRepo.getUsers(withDeleted, cursor));
   }
 
   public async getUserById (request: HTTPRequest) {
-    return makeJSONResponse(await this.userRepo.findUserById(request.param('id') as UserId));
+    const withDeleted = (request.query.get('delete')) ? true : false;
+
+    return makeJSONResponse(await this.userRepo.findUserById(request.param('id') as UserId, withDeleted));
   }
 
   public async create (request: HTTPRequest) {
-    const data = await request.req.json();
-    const result = await this.userRepo.createUser(data as IUser, { id: 1234, name: 'fake tenant' })
+    const data = User.fromRecord(await request.req.json());
+    const result = await this.userRepo.createUser(data)
 
     const response = makeJSONResponse(result);
     return response
   }
 
   public async update (request: HTTPRequest) {
-    const data = await request.req.json();
+    const data = User.fromRecord(await request.req.json());
     const id = request.param<UserId>('id') || false;
 
     if (id) {
-      return makeJSONResponse(await this.userRepo.updateUser(id, data as IUser));
+      return makeJSONResponse(await this.userRepo.updateUser(id, data));
     }
 
     return makeJSONResponse(makeApiFailResponse(new ApiError('ID does not exist')));
   }
+
+  public async restore (request: HTTPRequest) {
+    const id = request.param<UserId>('id') || 0;
+
+    return makeJSONResponse(await this.userRepo.restoreUser(id));
+  }
+
   public async deleteUser (request: HTTPRequest) {
     const id = request.param<UserId>('id') || false;
     if (id) {
-      return makeJSONResponse(await this.userRepo.deleteUser(id));
+      return makeJSONResponse(await this.userRepo.softDeleteUser(id));
+    }
+
+    return makeJSONResponse(makeApiFailResponse(new ApiError('ID does not exist')));
+  }
+
+  public async hardDeleteUser (request: HTTPRequest) {
+    const id = request.param<UserId>('id') || false;
+    if (id) {
+      return makeJSONResponse(await this.userRepo.hardDeleteUser(id));
     }
 
     return makeJSONResponse(makeApiFailResponse(new ApiError('ID does not exist')));
@@ -57,7 +80,9 @@ export function registerAdminUserRoutes (router: IRouter): IRouter {
   router.get('users/:id', controller, 'getUserById');
   router.post('users', controller, 'create');
   router.put('users/:id', controller, 'update');
+  router.put('users/restore/:id', controller, 'update');
   router.delete('users/:id', controller, 'deleteUser');
+  router.delete('users/hard-delete/:id', controller, 'hardDeleteUser');
 
   return router;
 }
