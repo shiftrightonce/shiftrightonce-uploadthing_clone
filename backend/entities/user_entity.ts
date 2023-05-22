@@ -68,7 +68,7 @@ export class User implements IUser {
   }
 
   get isSystemAdminAsNumber () {
-    return this.isSysAdmin ? 1 : true
+    return this.isSysAdmin ? 1 : 0
   }
 
   get internal_id () {
