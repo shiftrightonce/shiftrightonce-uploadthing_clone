@@ -1,10 +1,8 @@
 import { APIResponse, ApiError, makeApiFailResponse, makeApiSuccessResponse } from "../services/api_service.ts";
-import { getDb, userTenantRepo } from "../app.ts";
+import { getDb } from "../app.ts";
 import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
 import { User } from "../entities/user_entity.ts";
-import { Tenant } from "../entities/tenant_entity.ts";
-import { DbCursor, Page } from "./repository_helper.ts";
-import { UserTenantRole } from "../entities/user_tenant_entity.ts";
+import { DbCursor } from "./repository_helper.ts";
 
 export type UserId = string | number;
 
