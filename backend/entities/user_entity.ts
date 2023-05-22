@@ -20,6 +20,9 @@ export class User implements IUser {
   private _isSystemAdmin = false;
   private _name = ''
   private _internal_id = 0;
+  private _created_at = 0;
+  private _updated_at = 0;
+  private _deleted_at = 0;
 
   constructor(id: UserId = makeUlid()) {
     this._id = id;
@@ -75,11 +78,28 @@ export class User implements IUser {
     this._internal_id = id;
   }
 
-  public static fromRecord (record: Record<string, unknown>): User {
+  get created_at () {
+    return this._created_at;
+  }
+
+  get updated_at () {
+    return this._updated_at
+  }
+
+  get deleted_at () {
+    return this._deleted_at;
+  }
+
+  public merge (user: User) {
+    User.fromRecord(user.toJSON(), this)
+  }
+
+  public static fromRecord (record: Record<string, unknown>, base: User | undefined = undefined): User {
     let obj: User;
 
-    // ID
-    if (record.id) {
+    if (base) {
+      obj = base;
+    } else if (record.id) {
       obj = new User(record.id as UserId)
     } else {
       obj = new User()
@@ -92,24 +112,51 @@ export class User implements IUser {
 
     // status
     if (record.status) {
-      obj.status = record.status as UserStatus
+      if (!isNaN(record.status as number)) {
+        obj.status = record.status ? UserStatus.ACTIVE : UserStatus.INACTIVE;
+      } else {
+        switch ((record.status as string).toLowerCase()) {
+          case 'active':
+            obj.status = UserStatus.ACTIVE;
+            break;
+          case 'inactive':
+          case 'disable':
+            obj.status = UserStatus.INACTIVE;
+            break;
+        }
+      }
     }
 
     // is system admin
     if (record.system_admin) {
-      obj.isSysAdmin = record.system_admin as boolean
+      obj.isSysAdmin = record.system_admin ? true : false;
     }
 
     if (record.isSystemAdmin) {
-      obj.isSysAdmin = record.isSystemAdmin as boolean
+      obj.isSysAdmin = record.isSystemAdmin ? true : false
     }
 
     if (record.is_system_admin) {
-      obj.isSysAdmin = record.is_system_admin as boolean
+      obj.isSysAdmin = (record.is_system_admin) ? true : false
     }
 
     if (record.internal_id) {
       obj.internal_id = record.internal_id as number
+    }
+
+    // created at
+    if (record.created_at) {
+      obj._created_at = record.created_at as number;
+    }
+
+    // updated at
+    if (record.updated_at) {
+      obj._updated_at = record.updated_at as number;
+    }
+
+    // deleted at
+    if (record.deleted_at) {
+      obj._deleted_at = record.deleted_at as number;
     }
 
     return obj
@@ -121,7 +168,10 @@ export class User implements IUser {
       id: this.id,
       is_system_admin: this.isSysAdmin,
       name: this.name,
-      status: this.status
+      status: (this.status === UserStatus.ACTIVE) ? 'active' : 'inactive',
+      created_at: this.created_at,
+      updated_at: this.updated_at,
+      deleted_at: this.deleted_at
     }
   }
 }

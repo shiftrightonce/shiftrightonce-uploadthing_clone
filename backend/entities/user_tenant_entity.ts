@@ -1,4 +1,4 @@
-import { makeUlid } from "../app.ts";
+import { makeUlid, userRepo } from "../app.ts";
 import { Tenant } from "./tenant_entity.ts";
 import { User } from "./user_entity.ts";
 
@@ -30,6 +30,9 @@ export class UserTenant implements IUserTenant {
   private _token = '';
   private _user: User | undefined = undefined;
   private _tenant: Tenant | undefined = undefined;
+  private _created_at = 0;
+  private _updated_at = 0;
+  private _deleted_at = 0;
 
   get user_internal_id () {
     return this._user_internal_id
@@ -63,6 +66,22 @@ export class UserTenant implements IUserTenant {
     this.addRole(roles)
   }
 
+  get created_at () {
+    return this._created_at;
+  }
+
+  get updated_at () {
+    return this._updated_at
+  }
+
+  get deleted_at () {
+    return this._deleted_at;
+  }
+
+  get statusAsNumber () {
+    return this.status === UserTenantStatus.ACTIVE ? 1 : 0;
+  }
+
   public addRole (role: UserTenantRole | UserTenantRole[]) {
     const roles = (Array.isArray(role)) ? role : [role];
 
@@ -83,10 +102,6 @@ export class UserTenant implements IUserTenant {
   }
 
   getUser () {
-    if (!this._user && this.user_internal_id) {
-      // TODO: FETCH User 
-    }
-
     return this._user
   }
 
@@ -96,10 +111,6 @@ export class UserTenant implements IUserTenant {
   }
 
   getTenant () {
-    if (!this._tenant && this._tenant_internal_id) {
-      // TODO: Fetch Tenant
-    }
-
     return this._tenant;
   }
 
@@ -146,7 +157,11 @@ export class UserTenant implements IUserTenant {
 
     // roles
     if (record.roles) {
-      obj.roles = record.roles as UserTenantRole[]
+      if (typeof record.roles === 'string') {
+        obj.roles = JSON.parse(record.roles) as UserTenantRole[]
+      } else {
+        obj.roles = record.roles as UserTenantRole[]
+      }
     }
 
     // token
@@ -165,6 +180,22 @@ export class UserTenant implements IUserTenant {
     if (tenant.id) {
       obj.setTenant(tenant);
     }
+
+    // created at
+    if (record.created_at) {
+      obj._created_at = record.created_at as number;
+    }
+
+    // updated at
+    if (record.updated_at) {
+      obj._updated_at = record.updated_at as number;
+    }
+
+    // deleted at
+    if (record.deleted_at) {
+      obj._deleted_at = record.deleted_at as number;
+    }
+
     return obj;
   }
 

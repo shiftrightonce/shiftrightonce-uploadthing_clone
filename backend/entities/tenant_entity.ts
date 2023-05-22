@@ -21,6 +21,9 @@ export class Tenant implements ITenant {
   private _name = '';
   private _internal_id = 0;
   private _is_default = false;
+  private _created_at = 0;
+  private _updated_at = 0;
+  private _deleted_at = 0;
 
   constructor(id: TenantId = makeUlid()) {
     this._id = id;
@@ -66,19 +69,41 @@ export class Tenant implements ITenant {
     return (this.is_default) ? 1 : 0
   }
 
+  get created_at () {
+    return this._created_at;
+  }
+
+  get updated_at () {
+    return this._updated_at
+  }
+
+  get deleted_at () {
+    return this._deleted_at;
+  }
+
+
+  public merge (tenant: Tenant) {
+    Tenant.fromRecord(tenant.toJSON(), this)
+  }
+
   public toJSON () {
     return {
       id: this.id,
       name: this.name,
-      status: this.status,
-      is_default: this.is_default
+      status: (this.status === TenantStatus.ACTIVE) ? 'active' : 'inactive',
+      is_default: this.is_default,
+      created_at: this.created_at,
+      updated_at: this.updated_at,
+      deleted_at: this.deleted_at
     }
   }
 
-  public static fromRecord (record: Record<string, unknown>): Tenant {
+  public static fromRecord (record: Record<string, unknown>, base: Tenant | undefined = undefined): Tenant {
     let obj: Tenant;
 
-    if (record.id) {
+    if (base) {
+      obj = base;
+    } else if (record.id) {
       obj = new Tenant(record.id as TenantId)
     } else {
       obj = new Tenant()
@@ -91,7 +116,19 @@ export class Tenant implements ITenant {
 
     // status
     if (record.status) {
-      obj.status = record.status as TenantStatus
+      if (!isNaN(record.status as number)) {
+        obj.status = record.status ? TenantStatus.ACTIVE : TenantStatus.INACTIVE;
+      } else {
+        switch ((record.status as string).toLowerCase()) {
+          case 'active':
+            obj.status = TenantStatus.ACTIVE;
+            break;
+          case 'inactive':
+          case 'disable':
+            obj.status = TenantStatus.INACTIVE;
+            break;
+        }
+      }
     }
 
     // internal id
@@ -101,7 +138,26 @@ export class Tenant implements ITenant {
 
     // is default
     if (record.is_default) {
-      obj.is_default = (record.is_default === 0) ? false : true;
+      if (typeof record.is_default === 'boolean') {
+        obj.is_default = record.is_default;
+      } else {
+        obj.is_default = (record.is_default === 0) ? false : true;
+      }
+    }
+
+    // created at
+    if (record.created_at) {
+      obj._created_at = record.created_at as number;
+    }
+
+    // updated at
+    if (record.updated_at) {
+      obj._updated_at = record.updated_at as number;
+    }
+
+    // deleted at
+    if (record.deleted_at) {
+      obj._deleted_at = record.deleted_at as number;
     }
 
     return obj;
