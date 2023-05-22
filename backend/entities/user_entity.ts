@@ -1,4 +1,5 @@
 import { makeUlid } from "../app.ts";
+import { toDateOrNull } from "../repository/repository_helper.ts";
 
 export type UserId = string | number;
 
@@ -169,9 +170,9 @@ export class User implements IUser {
       is_system_admin: this.isSysAdmin,
       name: this.name,
       status: (this.status === UserStatus.ACTIVE) ? 'active' : 'inactive',
-      created_at: this.created_at,
-      updated_at: this.updated_at,
-      deleted_at: this.deleted_at
+      created_at: toDateOrNull(this.created_at),
+      updated_at: toDateOrNull(this.updated_at),
+      deleted_at: toDateOrNull(this.deleted_at)
     }
   }
 }

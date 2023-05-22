@@ -1,4 +1,5 @@
 import { makeUlid } from "../app.ts";
+import { toDateOrNull } from "../repository/repository_helper.ts";
 
 export interface ITenant {
   name: string,
@@ -92,9 +93,9 @@ export class Tenant implements ITenant {
       name: this.name,
       status: (this.status === TenantStatus.ACTIVE) ? 'active' : 'inactive',
       is_default: this.is_default,
-      created_at: this.created_at,
-      updated_at: this.updated_at,
-      deleted_at: this.deleted_at
+      created_at: toDateOrNull(this.created_at),
+      updated_at: toDateOrNull(this.updated_at),
+      deleted_at: toDateOrNull(this.deleted_at)
     }
   }
 

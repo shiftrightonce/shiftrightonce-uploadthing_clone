@@ -2,6 +2,10 @@ import { HTTPRequest } from "../core/router.ts";
 
 export type Direction = 'ASC' | 'DESC';
 
+export function toDateOrNull (ts: number): Date | null {
+  return (ts) ? new Date(ts) : null
+}
+
 export class Sorter {
   private _field: string;
   private _direction: Direction = 'ASC';

@@ -1,4 +1,5 @@
 import { makeUlid, userRepo } from "../app.ts";
+import { toDateOrNull } from "../repository/repository_helper.ts";
 import { Tenant } from "./tenant_entity.ts";
 import { User } from "./user_entity.ts";
 
@@ -133,7 +134,10 @@ export class UserTenant implements IUserTenant {
       user: this.getUser(),
       tenant: this.getTenant(),
       token: this.token,
-      status: this.status
+      status: this.status,
+      created_at: toDateOrNull(this.created_at),
+      updated_at: toDateOrNull(this.updated_at),
+      deleted_at: toDateOrNull(this.deleted_at)
     }
   }
 
