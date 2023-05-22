@@ -203,8 +203,9 @@ export class UserRepository {
             system_admin: user.isSystemAdminAsNumber,
             created_at: Date.now()
           })
-          resolve((affected) ? this.findUserById(user.id) : makeApiFailResponse(new ApiError(user.internal_id ? 'Could not save user' : 'Could not update user')))
         }
+
+        resolve((affected) ? this.findUserById(user.id) : makeApiFailResponse(new ApiError(user.internal_id ? 'Could not save user' : 'Could not update user')))
       } catch (error) {
         reject(error)
       }
