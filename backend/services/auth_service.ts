@@ -1,8 +1,8 @@
-import { makeHttpResponse } from "../core/response.ts";
+import { userTenantRepo } from "../app.ts";
 import { HTTPRequest } from "../core/router.ts";
 import { ITenant, TenantId } from "../entities/tenant_entity.ts";
-import { IUser } from "../repository/user_repository.ts";
-import { ApiError, makeApiHttpResponse, makeApiResponse } from "./api_service.ts";
+import { UserTenant, UserTenantRole, UserTenantStatus } from "../entities/user_tenant_entity.ts";
+import { ApiError, makeApiHttpResponse } from "./api_service.ts";
 
 export function isAuthenticated () {
 
@@ -18,27 +18,42 @@ export function getTokenFromQueryString (req: HTTPRequest): string | undefined {
   return req.query.get('token') || undefined
 }
 
-export function getAccessToken (req: HTTPRequest) {
-  return getTokenFromHeader(req) || getTokenFromQueryString(req)
+export async function fetchUserTenant (token: string): Promise<UserTenant | false> {
+  const result = await userTenantRepo.findUserByToken(token);
+
+  return (result.success && result.data.status === UserTenantStatus.ACTIVE) ? result.data : false;
 }
 
-export function isAdmin (token?: string): boolean {
-  if (!token) {
+export function getAccessToken (req: HTTPRequest): string {
+  return getTokenFromHeader(req) || getTokenFromQueryString(req) || ''
+}
+
+export function isSysAdmin (userTenant: UserTenant | false): boolean {
+  if (!userTenant) {
+    return false;
+  }
+  return userTenant.getUser()!.isSysAdmin || false;
+}
+
+export function isAdmin (userTenant: UserTenant | false): boolean {
+  if (!userTenant) {
     return false;
   }
 
-  // 1. Find the admin user by token
-  // 2. If user exist and the account is active, return true else false
-
-  return "abcd123" === token;
+  return userTenant.roles.indexOf(UserTenantRole.ADMIN) > -1 || isSysAdmin(userTenant)
 }
 
-export function isTenant (): boolean {
-  return false;
+export function canUpload (userTenant: UserTenant | false): boolean {
+  if (!userTenant) {
+    return false;
+  }
+
+  return userTenant.roles.indexOf(UserTenantRole.UPLOADER) > -1 || userTenant.roles.indexOf(UserTenantRole.ADMIN) > -1 || isSysAdmin(userTenant)
 }
 
-export function isGuest (): boolean {
-  return (!isAdmin() && !isTenant());
+
+export function isGuest (userTenant: UserTenant | false): boolean {
+  return userTenant === false;
 }
 
 export function generateUserToken (tenant: ITenant | TenantId): string {
@@ -47,7 +62,5 @@ export function generateUserToken (tenant: ITenant | TenantId): string {
 }
 
 export function makePermissionDeniedResponse (): Response {
-  return makeApiHttpResponse(false, undefined, new ApiError('Permission denied', {
-    cause: 'token_wrong'
-  }))
+  return makeApiHttpResponse(false, undefined, new ApiError('Permission denied'), { status: 419 })
 }
