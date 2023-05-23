@@ -26,10 +26,21 @@ export class TenantController {
     return makeJSONResponse(await this.userTenantRepo.findUsersByTenant(this.pluckTenant(req), withDeleted, cursor))
   }
 
+  public async generateUploadLink (req: HTTPRequest) {
+    const authUser = this.pluckUserTenant(req);
+    const tenant = this.pluckTenant(req);
+
+
+  }
+
 
   private pluckTenant (req: HTTPRequest): Tenant {
-    const userTenant = req.getData('userTenant') as UserTenant
+    const userTenant = this.pluckUserTenant(req);
     return userTenant.getTenant()!
+  }
+
+  private pluckUserTenant (req: HTTPRequest): UserTenant {
+    return req.getData('userTenant') as UserTenant;
   }
 }
 
