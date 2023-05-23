@@ -1,6 +1,7 @@
 import { makeUlid } from "../app.ts";
 import { toDateOrNull } from "../repository/repository_helper.ts";
 import { Tenant } from "./tenant_entity.ts";
+import { UploadConstrain } from "./upload_entity.ts";
 import { User } from "./user_entity.ts";
 
 export enum UserTenantStatus {
@@ -23,6 +24,7 @@ export class UserTenant {
   private _created_at = 0;
   private _updated_at = 0;
   private _deleted_at = 0;
+  private _constrain: UploadConstrain | null = null;
 
   get user_internal_id () {
     return this._user_internal_id
@@ -54,6 +56,18 @@ export class UserTenant {
 
   set roles (roles: UserTenantRole[]) {
     this.addRole(roles)
+  }
+
+  get constrain () {
+    return this._constrain;
+  }
+
+  set constrain (constrain: UploadConstrain | null) {
+    this._constrain = constrain;
+  }
+
+  public hasConstrain (): boolean {
+    return this.constrain !== null;
   }
 
   get created_at () {
@@ -124,6 +138,7 @@ export class UserTenant {
       tenant: this.getTenant(),
       token: this.token,
       status: this.status,
+      constrain: this.hasConstrain() ? this.constrain?.toJSON() : null,
       created_at: toDateOrNull(this.created_at),
       updated_at: toDateOrNull(this.updated_at),
       deleted_at: toDateOrNull(this.deleted_at)
@@ -172,6 +187,11 @@ export class UserTenant {
     const tenant = Tenant.fromRecord(obj.pluckTenantDataFromResult(record));
     if (tenant.id) {
       obj.setTenant(tenant);
+    }
+
+    // constrain
+    if (record.constrain) {
+      obj.constrain = UploadConstrain.fromRecord((typeof record.constrain === 'string') ? JSON.parse(record.constrain) : record.constrain);
     }
 
     // created at
