@@ -3,7 +3,7 @@ import { User } from "../entities/user_entity.ts";
 import { UserTenant, UserTenantRole } from "../entities/user_tenant_entity.ts";
 import { TenantRepository } from "../repository/tenant_repository.ts";
 import { UserRepository } from "../repository/user_repository.ts";
-import { UserTenantCommitResult, UserTenantRepository } from "../repository/user_tenant_repository.ts";
+import { UserTenantRepository } from "../repository/user_tenant_repository.ts";
 
 
 /**
