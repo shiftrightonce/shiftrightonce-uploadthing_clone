@@ -5,14 +5,12 @@ import {
   Generator,
 } from "https://deno.land/x/ulideno@v0.2.0/mod.ts";
 import { UserRepository } from "./repository/user_repository.ts";
-import { User } from "./entities/user_entity.ts";
-import { Tenant } from "./entities/tenant_entity.ts";
 import { TenantRepository } from "./repository/tenant_repository.ts";
 import { UserTenantRepository } from "./repository/user_tenant_repository.ts";
-import { UserTenantRole } from "./entities/user_tenant_entity.ts";
 import { setupDefaultUserAndTenant } from "./setup/record.ts";
 
 const db = new Database("./storage/data.db");
+db.int64 = true;
 
 export const userRepo = new UserRepository();
 export const tenantRepo = new TenantRepository();
