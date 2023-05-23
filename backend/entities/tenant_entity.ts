@@ -1,5 +1,6 @@
 import { makeUlid } from "../app.ts";
 import { toDateOrNull } from "../repository/repository_helper.ts";
+import { UploadConstrain } from "./upload_entity.ts";
 
 export interface ITenant {
   name: string,
@@ -22,6 +23,7 @@ export class Tenant implements ITenant {
   private _name = '';
   private _internal_id = 0;
   private _is_default = false;
+  private _constrain: UploadConstrain = new UploadConstrain();
   private _created_at = 0;
   private _updated_at = 0;
   private _deleted_at = 0;
@@ -82,6 +84,10 @@ export class Tenant implements ITenant {
     return this._deleted_at;
   }
 
+  get constrain () {
+    return this._constrain
+  }
+
 
   public merge (tenant: Tenant) {
     Tenant.fromRecord(tenant.toJSON(), this)
@@ -92,6 +98,7 @@ export class Tenant implements ITenant {
       id: this.id,
       name: this.name,
       status: (this.status === TenantStatus.ACTIVE) ? 'active' : 'inactive',
+      constrain: this.constrain,
       is_default: this.is_default,
       created_at: toDateOrNull(this.created_at),
       updated_at: toDateOrNull(this.updated_at),
@@ -144,6 +151,11 @@ export class Tenant implements ITenant {
       } else {
         obj.is_default = (record.is_default === 0) ? false : true;
       }
+    }
+
+    // constrain
+    if (record.constrain) {
+      obj._constrain = (typeof record.constrain === 'string') ? UploadConstrain.fromRecord(JSON.parse(record.constrain)) : UploadConstrain.fromRecord(record.constrain as Record<string, unknown>)
     }
 
     // created at
