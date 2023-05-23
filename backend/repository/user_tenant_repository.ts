@@ -1,10 +1,9 @@
 import { Database } from "https://deno.land/x/sqlite3@0.9.1/src/database.ts";
 import { getDb } from "../app.ts";
 import { APIResponse, ApiError, makeApiFailResponse, makeApiSuccessResponse } from "../services/api_service.ts";
-import { IUserTenant, UserTenant, UserTenantRole, UserTenantStatus } from "../entities/user_tenant_entity.ts";
-import { Tenant, TenantId } from "../entities/tenant_entity.ts";
+import { UserTenant, UserTenantRole, UserTenantStatus } from "../entities/user_tenant_entity.ts";
+import { Tenant } from "../entities/tenant_entity.ts";
 import { User } from "../entities/user_entity.ts";
-import { resolve } from "https://deno.land/std@0.119.0/path/win32.ts";
 import { DbCursor } from "./repository_helper.ts";
 
 export type UserTenantCommitResult = Promise<APIResponse<UserTenant>>
