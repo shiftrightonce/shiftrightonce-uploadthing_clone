@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS "tenants" (
 	"status"	INTEGER NOT NULL,
 	"is_default"	INTEGER NOT NULL,
 	"name"	INTEGER NOT NULL,
+	"constraint" TEXT,
+	"metadata"	TEXT,
 	"created_at"	NUMERIC NOT NULL DEFAULT 0,
 	"updated_at"	NUMERIC DEFAULT 0,
 	"deleted_at"	NUMERIC DEFAULT 0,
@@ -32,11 +34,13 @@ CREATE TABLE IF NOT EXISTS "user_tenants" (
 	"status"	INTEGER NOT NULL,
 	"roles"	TEXT NOT NULL,
 	"token"	TEXT NOT NULL,
+	"constraint" TEXT,
+	"metadata"	TEXT,
 	"created_at"	NUMERIC NOT NULL,
 	"updated_at"	NUMERIC DEFAULT 0,
 	"deleted_at"	NUMERIC DEFAULT 0,
-	FOREIGN KEY("user_internal_id") REFERENCES "users"("internal_id"),
-	FOREIGN KEY("tenant_internal_id") REFERENCES "tenants"("internal_id")
+	FOREIGN KEY("user_internal_id") REFERENCES "users"("internal_id") ON DELETE CASCADE,
+	FOREIGN KEY("tenant_internal_id") REFERENCES "tenants"("internal_id") ON DELETE CASCADE
 )
 `;
 
@@ -46,9 +50,30 @@ CREATE INDEX IF NOT EXISTS "user_tenant_index" ON "user_tenants" (
 	"tenant_internal_id"
 ) `;
 
+export const signedUrlTable = `
+CREATE TABLE IF NOT EXISTS "signed_urls" (
+	"internal_id"	INTEGER,
+	"id"	TEXT NOT NULL,
+	"author_internal_id"	INTEGER,
+	"tenant_internal_id"	INTEGER,
+	"version"	INTEGER DEFAULT 1,
+	"total"	INTEGER DEFAULT 1,
+	"constraint"	TEXT NOT NULL,
+	"metadata"	TEXT,
+	"expire_at"	NUMERIC NOT NULL,
+	"created_at"	NUMERIC NOT NULL,
+	"updated_at"	NUMERIC DEFAULT 0,
+	"deleted_at"	NUMERIC DEFAULT 0,
+	PRIMARY KEY("internal_id" AUTOINCREMENT),
+	FOREIGN KEY("author_internal_id") REFERENCES "users"("internal_id") ON DELETE CASCADE,
+	FOREIGN KEY("tenant_internal_id") REFERENCES "tenants"("internal_id") ON DELETE CASCADE
+)
+`;
+
 export const createStatements = [
 	tenantTable,
 	userTable,
 	userTenantRelationshipTable,
-	userTenantTableIndex
+	userTenantTableIndex,
+	signedUrlTable,
 ];
