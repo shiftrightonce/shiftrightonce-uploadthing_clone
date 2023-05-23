@@ -37,7 +37,7 @@ export class TenantController {
 export function registerTenantController (r: IRouter): IRouter {
   const controller = new TenantController(tenantRepo, userRepo, userTenantRepo)
 
-  r.get('/users', controller, 'getUsers')
+  r.get('users', controller, 'getUsers')
 
   return r;
 }
