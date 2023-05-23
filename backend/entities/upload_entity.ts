@@ -1,6 +1,7 @@
 export class UploadConstraint {
   private _size = 0;
   private _allow: string[] = [];
+  private _storage = 'default';
 
   get size () {
     return this._size
@@ -21,6 +22,10 @@ export class UploadConstraint {
 export class UploadMetadata {
   private _webhook = '';
   private _data: Record<string, unknown> = {};
+  private _storage = 'default';
+  private filename = '';
+  private _created_at = 0;
+  private _user_internal_id = 0;
 
 
   public toJSON () {
