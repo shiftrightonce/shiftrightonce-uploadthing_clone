@@ -2,6 +2,7 @@ import { tenantRepo, userRepo, userTenantRepo } from "../../app.ts";
 import { makeJSONResponse } from "../../core/response.ts";
 import { HTTPRequest, IRouter } from "../../core/router.ts";
 import { Tenant } from "../../entities/tenant_entity.ts";
+import { UserTenant } from "../../entities/user_tenant_entity.ts";
 import { DbCursor } from "../../repository/repository_helper.ts";
 import { TenantRepository } from "../../repository/tenant_repository.ts";
 import { UserRepository } from "../../repository/user_repository.ts";
@@ -27,7 +28,8 @@ export class TenantController {
 
 
   private pluckTenant (req: HTTPRequest): Tenant {
-    return req.getData('tenant') as Tenant
+    const userTenant = req.getData('userTenant') as UserTenant
+    return userTenant.getTenant()!
   }
 }
 
