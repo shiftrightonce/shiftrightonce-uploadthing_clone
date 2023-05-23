@@ -1,4 +1,4 @@
-import { makeUlid, userRepo } from "../app.ts";
+import { makeUlid } from "../app.ts";
 import { toDateOrNull } from "../repository/repository_helper.ts";
 import { Tenant } from "./tenant_entity.ts";
 import { User } from "./user_entity.ts";
@@ -12,18 +12,7 @@ export enum UserTenantRole {
   UPLOADER = 2,
 }
 
-
-export interface IUserTenant {
-  user?: User,
-  tenant?: Tenant,
-  user_internal_id: number,
-  tenant_internal_id: number,
-  status: UserTenantStatus
-  roles: UserTenantRole[],
-  token: string
-}
-
-export class UserTenant implements IUserTenant {
+export class UserTenant {
   private _user_internal_id = 0;
   private _tenant_internal_id = 0;
   private _status = UserTenantStatus.ACTIVE;
