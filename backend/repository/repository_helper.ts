@@ -19,6 +19,10 @@ export class Sorter {
     return this._field;
   }
 
+  set field (f) {
+    this._field = f;
+  }
+
   public toString (): string {
     if (this._direction === 'ASC') {
       return `+${this._field}`;
@@ -48,6 +52,7 @@ export class DbCursor {
   private _field: string;
   private _additionalSortFields: Sorter[] = []
   private _current: number | string;
+  private _columnPrefix = '';
 
   constructor(field = 'created_at', current: number | string, limit = 255) {
     this._field = field
@@ -57,16 +62,29 @@ export class DbCursor {
   }
 
   get field () {
-    return this._field;
+    return this.prefixColumn(this._field);
+  }
+
+  set field (f) {
+    this._field = f;
+  }
+
+  get prefix () {
+    return this._columnPrefix;
+  }
+
+  set prefix (prefix: string) {
+    this._columnPrefix = prefix;
   }
 
   public whereSql (): string {
-    return `${this._field} > ${this._current}`;
+    return `${this.field} > ${this._current}`;
   }
 
   public orderBySql (): string {
     let sql = `ORDER BY `;
     this._additionalSortFields.forEach((s, index) => {
+      s.field = this.prefixColumn(s.field);
       sql += (index) ? ` , ${s.toSql()}` : s.toSql()
     })
     return sql;
@@ -86,17 +104,11 @@ export class DbCursor {
     return `${this.whereSql()} ${this.orderBySql()} ${this.limitSql()}`;
   }
 
-  public urlEncode (): string {
-    const str = this.toString();
-
-    // TODO: URL encode string
-
-    return str;
-  }
-
   public next (count: number, next: number | string): DbCursor | null {
     if (count > 0 && count <= this._limit) {
-      const cursor = new DbCursor(this._field, next, this._limit);
+      const cursor = new DbCursor(this.field, next, this._limit);
+      cursor.prefix = this.prefix;
+
       this._additionalSortFields.forEach((s) => cursor.addSort(s));
       return cursor;
     }
@@ -105,20 +117,24 @@ export class DbCursor {
 
   public toString (): string {
     const sort = this._additionalSortFields.reduce((str, s) => {
+      s.field = this.prefixColumn(this.field)
       str += (str) ? `$${s.toString()}` : `${s.toString()}`
       return str;
     }, '')
 
     // where field | Current value | limit | sort fields
-    return `${this._field}|${this._current}|${this._limit}|${sort}`
+    return `${this.field}|${this._current}|${this._limit}|${sort}`
   }
 
   public toJSON () {
     return {
-      field: this._field,
+      field: this.field,
       current: this._current,
       limit: this._limit,
-      sort: this._additionalSortFields.map((s) => s.toString()),
+      sort: this._additionalSortFields.map((s) => {
+        s.field = this.prefixColumn(this.field)
+        return s.toString();
+      }),
     }
   }
 
@@ -178,6 +194,10 @@ export class DbCursor {
 
 
     return cursor;
+  }
+
+  private prefixColumn (column: string) {
+    return (this._columnPrefix && column.indexOf('.') === -1) ? `${this._columnPrefix}.${column}` : column;
   }
 
 }
