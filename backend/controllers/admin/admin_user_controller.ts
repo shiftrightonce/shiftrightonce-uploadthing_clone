@@ -2,7 +2,6 @@ import { userRepo } from "../../app.ts";
 import { HTTPRequest } from "../../core/request.ts";
 import { makeJSONResponse } from "../../core/response.ts";
 import { IRouter } from "../../core/router.ts";
-import { Tenant } from "../../entities/tenant_entity.ts";
 import { User } from "../../entities/user_entity.ts";
 import { DbCursor } from "../../repository/repository_helper.ts";
 import { UserId, UserRepository } from "../../repository/user_repository.ts";
