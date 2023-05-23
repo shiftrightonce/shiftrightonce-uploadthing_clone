@@ -163,8 +163,6 @@ export class UserTenantRepository {
             token: userTenant.token,
             roles: JSON.stringify(userTenant.roles),
             created_at: Date.now(),
-            updated_at: 0,
-            deleted_at: 0
           })
         }
 
