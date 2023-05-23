@@ -50,8 +50,16 @@ router.group('/v1/t', (r) => {
 
 // uploading
 router.post("/v1/f", uploadController, 'handleUploadedFile').registerMiddleware(async (req, next) => {
-  return (canUpload(await enrichRequest(req))) ? next(req) : makePermissionDeniedResponse();
+  if (canUpload(await enrichRequest(req))) {
+    return next(req);
+  } else {
+    await req.req.body?.cancel()
+    return makePermissionDeniedResponse();
+  }
 });
+
+// uploading with a signed url
+
 
 // serving
 router.get('/s/:id', serverController, 'serveFile');
