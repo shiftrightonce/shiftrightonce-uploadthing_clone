@@ -16,6 +16,9 @@ export const userRepo = new UserRepository();
 export const tenantRepo = new TenantRepository();
 export const userTenantRepo = new UserTenantRepository();
 
+export const maxFileSize = parseInt(Deno.env.get('UPLOAD_SOMETHING_MAX_FILE_SIZE') || '10', 10); //  fallback to10MB
+
+
 export function makeUlid (): string {
   const gen = new Generator();
   return (gen.ulid_encoded() as string).toLowerCase();
