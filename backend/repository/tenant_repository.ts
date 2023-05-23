@@ -161,10 +161,10 @@ export class TenantRepository {
 
   public saveTenant (tenant: Tenant): TenantCommitResult {
     const create_sql = `
-    INSERT INTO 'tenants' ('id', 'name', 'status', 'is_default', 'created_at') VALUES (:id, :name, :status, :is_default, :created_at)
+    INSERT INTO 'tenants' ('id', 'name', 'status', 'is_default', 'created_at', 'constrain') VALUES (:id, :name, :status, :is_default, :created_at, :constrain)
     `;
     const update_sql = `
-    UPDATE 'tenants' SET 'name' = :name, 'status' = :status, 'is_default' = :is_default, 'updated_at' = :updated_at WHERE internal_id = :internal_id
+    UPDATE 'tenants' SET 'name' = :name, 'status' = :status, 'is_default' = :is_default, 'updated_at' = :updated_at, 'constrain' = :constrain WHERE internal_id = :internal_id
     `;
 
     return new Promise((resolve, reject) => {
@@ -178,6 +178,7 @@ export class TenantRepository {
             name: tenant.name,
             status: tenant.status,
             is_default: tenant.is_default_as_number,
+            constrain: JSON.stringify(tenant.constrain),
             updated_at: Date.now()
           })
         } else {
@@ -186,6 +187,7 @@ export class TenantRepository {
             name: tenant.name,
             status: tenant.status,
             is_default: tenant.is_default_as_number,
+            constrain: JSON.stringify(tenant.constrain),
             created_at: Date.now(),
           })
         }

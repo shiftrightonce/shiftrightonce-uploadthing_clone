@@ -142,8 +142,8 @@ export class UserTenantRepository {
   }
 
   private saveUserTenant (userTenant: UserTenant): UserTenantCommitResult {
-    const create_sql = `INSERT INTO 'user_tenants' ('user_internal_id', 'tenant_internal_id', 'roles', 'status', 'token', 'created_at') VALUES (:user_id, :tenant_id, :roles, :status, :token, :created_at) `;
-    const update_sql = `UPDATE 'user_tenants' SET  'status' = :status, 'token' = :token, updated_at = :updated_at, roles = :roles WHERE user_internal_id = :user_id AND tenant_internal_id = :tenant_id`;
+    const create_sql = `INSERT INTO 'user_tenants' ('user_internal_id', 'tenant_internal_id', 'roles', 'status', 'token', 'created_at', 'constrain') VALUES (:user_id, :tenant_id, :roles, :status, :token, :created_at, :constrain) `;
+    const update_sql = `UPDATE 'user_tenants' SET  'status' = :status, 'token' = :token, updated_at = :updated_at, roles = :roles, constrain = :constrain WHERE user_internal_id = :user_id AND tenant_internal_id = :tenant_id`;
 
     return new Promise((resolve, reject) => {
       try {
@@ -154,6 +154,7 @@ export class UserTenantRepository {
             status: userTenant.statusAsNumber,
             token: userTenant.token,
             roles: JSON.stringify(userTenant.roles),
+            constrain: (userTenant.hasConstrain()) ? JSON.stringify(userTenant.constrain) : null,
             updated_at: Date.now(),
           });
         } else {
@@ -163,6 +164,7 @@ export class UserTenantRepository {
             status: userTenant.statusAsNumber,
             token: userTenant.token,
             roles: JSON.stringify(userTenant.roles),
+            constrain: (userTenant.hasConstrain()) ? JSON.stringify(userTenant.constrain) : null,
             created_at: Date.now(),
           })
         }
