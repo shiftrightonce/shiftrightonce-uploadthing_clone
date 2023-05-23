@@ -53,6 +53,8 @@ export class UserTenantRepository {
     page: UserTenant[]
   }>> {
     const dbCursor = (typeof cursor === 'string') ? DbCursor.fromString(cursor) : cursor;
+    dbCursor.prefix = 'user_tenants';
+
     const sql = this.generateSql((withDeleted) ? ` WHERE tenant_internal_id = :tenant_id AND ${dbCursor.toSql()} ` : ` WHERE tenant_internal_id = :tenant_id AND user_tenants.deleted_at = 0 AND ${dbCursor.whereSql()} ${dbCursor.orderBySql()} ${dbCursor.limitSql()} `);
 
     return new Promise((resolve, reject) => {
