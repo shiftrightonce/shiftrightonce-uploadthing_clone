@@ -1,6 +1,6 @@
 import { APIResponse, ApiError, makeApiFailResponse, makeApiSuccessResponse } from "../services/api_service.ts";
 import { getDb } from "../app.ts";
-import { ITenant, Tenant, TenantId, TenantStatus } from "../entities/tenant_entity.ts";
+import { Tenant, TenantId, TenantStatus } from "../entities/tenant_entity.ts";
 import { Database } from "https://deno.land/x/sqlite3@0.9.1/mod.ts";
 import { DbCursor } from "./repository_helper.ts";
 
@@ -69,7 +69,7 @@ export class TenantRepository {
       current: string,
       next: string | null
     },
-    page: ITenant[]
+    page: Tenant[]
   }>> {
     const dbCursor = (typeof cursor === 'string') ? DbCursor.fromString(cursor) : cursor;
     const sql = (withDeleted) ? `SELECT * FROM 'tenants' WHERE ${dbCursor.toSql()}` : `SELECT * FROM 'tenants' WHERE deleted_at = 0 AND ${dbCursor.whereSql()} ${dbCursor.orderBySql()} ${dbCursor.limitSql()} `;
@@ -132,7 +132,7 @@ export class TenantRepository {
     return await this.findTenantById(id, true);
   }
 
-  public async harDeleteTenant (tenantId: TenantId | Tenant): TenantCommitResult {
+  public async hardDeleteTenant (tenantId: TenantId | Tenant): TenantCommitResult {
     const id = (typeof tenantId === 'object') ? tenantId.id : tenantId;
     const sql = `DELETE * FROM 'users' WHERE id = :id `;
 
