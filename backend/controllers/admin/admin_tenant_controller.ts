@@ -1,15 +1,13 @@
 import { makeJSONResponse } from "../../core/response.ts";
 import { HTTPRequest, IRouter } from "../../core/router.ts";
-import { ITenant, TenantId, TenantRepository } from "../../repository/tenant_repository.ts";
+import { Tenant, TenantId } from "../../entities/tenant_entity.ts";
+import { TenantRepository } from "../../repository/tenant_repository.ts";
+import { UserTenantRepository } from "../../repository/user_tenant_repository.ts";
 import { ApiError, makeApiFailResponse } from "../../services/api_service.ts";
 
 class AdminTenantController {
 
-  private tenantRepo: TenantRepository;
-
-  constructor(repo = new TenantRepository()) {
-    this.tenantRepo = repo
-  }
+  constructor(private tenantRepo = new TenantRepository(), private userTenantRepo = new UserTenantRepository()) { }
 
   public async getTenants (_request: HTTPRequest) {
     return makeJSONResponse(await this.tenantRepo.getTenants())
