@@ -42,7 +42,7 @@ class AdminTenantController {
   public async deleteTenant (request: HTTPRequest) {
     const id = request.param<TenantId>('id') || false;
     if (id) {
-      return makeJSONResponse(await this.tenantRepo.deleteTenant(id as TenantId))
+      return makeJSONResponse(await this.tenantRepo.softDeleteTenant(id as TenantId))
     }
 
     return makeJSONResponse(makeApiFailResponse(new ApiError('ID does not exist')));
