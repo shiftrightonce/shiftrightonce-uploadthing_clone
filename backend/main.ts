@@ -4,6 +4,7 @@ import { app, generateBaseUrl, getAppPort, getLocalStoragePath } from "./app.ts"
 import { LocalFsFileUpload } from "./core/local_fs_file_upload.ts";
 import router from './routes.ts'
 import { InMemoryUploadManager } from "./core/memory_file_upload.ts";
+import { makeHttpResponse } from "./core/response.ts";
 
 
 // register upload managers
@@ -17,7 +18,12 @@ router.setUploadManager(app.getUploadManager());
 
 
 const handler = async (request: Request): Promise<Response> => {
-  return await router.handleRoute(request)
+  try {
+    return await router.handleRoute(request)
+  } catch (e) {
+    console.error(`Server error: ${e.message}`, e.stack);
+    return makeHttpResponse('Server Error');
+  }
 };
 
 console.log(`HTTP webserver running. Access it at: ${generateBaseUrl()}`);
