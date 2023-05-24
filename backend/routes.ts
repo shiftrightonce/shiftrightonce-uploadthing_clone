@@ -1,5 +1,6 @@
 import { registerAdminTenantRoutes } from "./controllers/admin/admin_tenant_controller.ts";
 import { registerAdminUserRoutes } from "./controllers/admin/admin_user_controller.ts";
+import { registerAdminUserTenantRoutes } from "./controllers/admin/admin_user_tenant_controller.ts";
 import { ServerController } from "./controllers/server_controller.ts";
 import { registerTenantController } from "./controllers/tenant/tenant_controller.ts";
 import { UploadController } from "./controllers/upload_controller.ts";
@@ -36,6 +37,7 @@ const serverController = new ServerController();
 router.group('/v1/admin', (r) => {
   registerAdminTenantRoutes(r);
   registerAdminUserRoutes(r);
+  registerAdminUserTenantRoutes(r);
 }).registerMiddleware(async (req, next) => {
   return (isSysAdmin(await enrichRequest(req))) ? next(req) : makePermissionDeniedResponse();
 });
