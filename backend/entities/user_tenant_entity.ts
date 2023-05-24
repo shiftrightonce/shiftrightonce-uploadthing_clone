@@ -9,8 +9,8 @@ export enum UserTenantStatus {
 }
 
 export enum UserTenantRole {
-  ADMIN = 1,
-  UPLOADER = 2,
+  ADMIN = 'admin',
+  UPLOADER = 'uploader',
 }
 
 export class UserTenant {
