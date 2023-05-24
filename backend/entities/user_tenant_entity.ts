@@ -138,6 +138,7 @@ export class UserTenant {
       tenant: this.getTenant(),
       token: this.token,
       status: this.status,
+      roles: this.roles,
       constrain: this.hasConstrain() ? this.constrain?.toJSON() : null,
       created_at: toDateOrNull(this.created_at),
       updated_at: toDateOrNull(this.updated_at),
