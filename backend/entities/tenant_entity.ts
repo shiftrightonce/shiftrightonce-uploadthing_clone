@@ -2,13 +2,6 @@ import { makeUlid } from "../app.ts";
 import { toDateOrNull } from "../repository/repository_helper.ts";
 import { UploadConstrain } from "./upload_entity.ts";
 
-export interface ITenant {
-  name: string,
-  id: TenantId,
-  status: TenantStatus
-  is_default: boolean
-}
-
 export type TenantId = string | number;
 
 export enum TenantStatus {
@@ -17,7 +10,7 @@ export enum TenantStatus {
 }
 
 
-export class Tenant implements ITenant {
+export class Tenant {
   private _id: TenantId;
   private _status = TenantStatus.ACTIVE;
   private _name = '';
