@@ -24,12 +24,12 @@ class AdminTenantController {
   }
 
   public async create (request: HTTPRequest) {
-    const data = await request.req.json() as ITenant;
+    const data = await request.req.json() as Tenant;
     return makeJSONResponse(await this.tenantRepo.createTenant(data))
   }
 
   public async update (request: HTTPRequest) {
-    const data = await request.req.json() as ITenant;
+    const data = await request.req.json() as Tenant;
     const id = request.param<TenantId>('id') || false;
 
     if (id) {
