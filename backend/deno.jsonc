@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run -A --unstable --allow-env --allow-ffi --watch  main.ts",
-    "serve": "deno run -A --unstable --allow-env --allow-ffi main.ts"
+    "dev": "deno run -A --unstable-ffi --allow-env --allow-ffi --watch  main.ts",
+    "serve": "deno run -A --unstable-ffi --allow-env --allow-ffi main.ts"
   }
 }
