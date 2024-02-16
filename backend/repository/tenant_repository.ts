@@ -10,8 +10,8 @@ export class TenantRepository {
 
   private sqliteDb: Database;
 
-  constructor() {
-    this.sqliteDb = getDb()
+  constructor(db?: Database) {
+    this.sqliteDb = (db) ? db: getDb()
   }
 
   public findTenantById (id: TenantId, withDeleted = false): TenantCommitResult {

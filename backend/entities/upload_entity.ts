@@ -93,14 +93,14 @@ export type UploadId = string | number;
 
 export class Upload {
   private _internal_id = 0;
+  private _name = ''
   private _storage = 'default';
   private _user_internal_id = 0;
   private _tenant_internal_id = 0;
-  private _uploaded_at = 0;
   private _user: User | null = null;
   private _tenant: Tenant | null = null;
 
-  constructor(private _id: UploadId = makeUlid()) { }
+  constructor(private _id: UploadId = makeUlid(), private _uploaded_at = Date.now()) { }
 
 
   get internal_id () {
@@ -117,6 +117,15 @@ export class Upload {
 
   set id (id: UploadId) {
     this._id = id;
+  }
+
+
+  get name () {
+    return this._name;
+  }
+
+  set name (name: string) {
+    this._name = name;
   }
 
   get storage () {
@@ -192,6 +201,10 @@ export class Upload {
     // id
     if (record.id) {
       obj.id = record.id as string;
+    }
+
+    if (record.name) {
+      obj._name = record.name as string
     }
 
     // tenant internal ID

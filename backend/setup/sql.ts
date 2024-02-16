@@ -72,6 +72,7 @@ const uploadTable = `
 CREATE TABLE IF NOT EXISTS "uploads" (
 	"internal_id"	INTEGER,
 	"id"	TEXT NOT NULL,
+	"name"	TEXT NOT NULL,
 	"tenant_internal_id"	INTEGER NOT NULL,
 	"user_internal_id"	INTEGER NOT NULL,
 	"storage"	TEXT NOT NULL,

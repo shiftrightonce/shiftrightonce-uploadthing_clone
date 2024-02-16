@@ -1,6 +1,7 @@
 import { FormFile } from "https://deno.land/std@0.119.0/mime/multipart.ts";
 
 export type UploadResult = {
+  id?: string              // The database ID for the upload
   success: boolean,       // Flag indicating the action result
   name: string,           // The final name of the file
   full_url: string,       // Full URL to access the file (readonly)
